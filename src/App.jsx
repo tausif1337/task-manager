@@ -30,7 +30,7 @@ function App() {
 
   return (
     <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold text-center mb-4">�� Task Manager</h1>
+      <h1 className="text-2xl font-bold text-center mb-4">Task Manager</h1>
       <div className="mb-4">
         <div className="flex gap-2">
           <input type="text" value={newTask} onChange={(e) => setNewTask(e.target.value)} placeholder="Enter a new task..." className="flex-1 p-2 border rounded" />
