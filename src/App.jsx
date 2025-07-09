@@ -1,64 +1,77 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 function App() {
   const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
-  const [editIndex, setEditIndex] = useState(null);
+  const [newTask, setNewTask] = useState("");
 
+  // Add a new task
   const addTask = () => {
-    if (!newTask.trim()) return;
-    if (editIndex !== null) {
-      const updated = [...tasks];
-      updated[editIndex].text = newTask;
-      setTasks(updated);
-      setEditIndex(null);
-    } else {
-      setTasks([...tasks, { text: newTask, completed: false }]);
-    }
-    setNewTask('');
+    if (newTask.trim() === "") return;
+    const task = {
+      text: newTask,
+      completed: false,
+    };
+    setTasks([...tasks, task]);
+    setNewTask("");
   };
 
-  const toggleComplete = (index) => {
-    const updated = [...tasks];
-    updated[index].completed = !updated[index].completed;
-    setTasks(updated);
+  // Toggle task completion
+  const toggleTask = (index) => {
+    const updatedTasks = [...tasks];
+    updatedTasks[index].completed = !updatedTasks[index].completed;
+    setTasks(updatedTasks);
   };
 
+  // Delete a task
   const deleteTask = (index) => {
-    const updated = tasks.filter((_, i) => i !== index);
-    setTasks(updated);
-  };
-
-  const startEdit = (index) => {
-    setNewTask(tasks[index].text);
-    setEditIndex(index);
-  };
-
-  const handleChange = (e) => {
-    setNewTask(e.target.value);
+    const updatedTasks = tasks.filter((_, i) => i !== index);
+    setTasks(updatedTasks);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-md mx-auto bg-white shadow-lg rounded-xl p-6">
-        <h1 className="text-2xl font-bold mb-4 text-center">📝 Task Manager</h1>
-        <div className="flex mb-4">
-          <input type="text" className="flex-grow p-2 border rounded-l-md" value={newTask} onChange={handleChange} placeholder="Enter a task" />
-          <button className="bg-blue-500 text-white px-4 rounded-r-md hover:bg-blue-600" onClick={addTask}>{editIndex !== null ? 'Update' : 'Add'}</button>
+    <div className="p-4 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold text-center mb-4">📝 Task Manager</h1>
+
+      {/* Add task section */}
+      <div className="mb-4">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+            placeholder="Enter a new task..."
+            className="flex-1 p-2 border rounded"
+          />
+          <button onClick={addTask} className="px-4 py-2 bg-blue-500 text-white rounded">
+            Add Task
+          </button>
         </div>
-        <ul>
-          {tasks.map((task, index) => (
-            <li key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded mb-2">
-              <span onClick={() => toggleComplete(index)} className={`flex-1 cursor-pointer ${task.completed ? 'line-through text-gray-400' : ''}`}>
+      </div>
+
+      {/* Task list */}
+      <div>
+        {tasks.length === 0 ? (
+          <p className="text-center text-gray-500">No tasks yet. Add your first task above!</p>
+        ) : (
+          tasks.map((task, index) => (
+            <div key={index} className="flex justify-between items-center p-3 mb-2 bg-gray-100 rounded">
+              <span
+                onClick={() => toggleTask(index)}
+                className={`flex-1 cursor-pointer ${
+                  task.completed ? "line-through text-gray-400" : ""
+                }`}
+              >
                 {task.text}
               </span>
-              <div className="flex gap-2">
-                <button onClick={() => startEdit(index)} className="text-blue-500 hover:underline">Edit</button>
-                <button onClick={() => deleteTask(index)} className="text-red-500 hover:underline">Delete</button>
-              </div>
-            </li>
-          ))}
-        </ul>
+              <button
+                onClick={() => deleteTask(index)}
+                className="ml-2 px-3 py-1 bg-red-500 text-white rounded"
+              >
+                Delete
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
