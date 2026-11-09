@@ -1,35 +1,54 @@
+// The address of our Django backend.
 const API_URL = "http://127.0.0.1:8000/api/tasks/";
 
-async function request(url, errorMessage, options) {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error(errorMessage);
-  }
-  return response;
-}
-
-async function sendJson(url, method, data, errorMessage) {
-  const response = await request(url, errorMessage, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return response.json();
-}
-
+// Get all the tasks.
 export async function getTasks() {
-  const response = await request(API_URL, "Could not load tasks");
+  const response = await fetch(API_URL);
+
+  if (!response.ok) {
+    throw new Error("Could not load tasks");
+  }
+
   return response.json();
 }
 
-export function addTask(task) {
-  return sendJson(API_URL, "POST", task, "Could not add task");
+// Create a new task.
+export async function addTask(task) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(task),
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not add task");
+  }
+
+  return response.json();
 }
 
-export function editTask(id, changes) {
-  return sendJson(API_URL + id + "/", "PATCH", changes, "Could not update task");
+// Change part of an existing task.
+export async function editTask(id, changes) {
+  const response = await fetch(API_URL + id + "/", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(changes),
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not update task");
+  }
+
+  return response.json();
 }
 
+// Delete a task.
 export async function removeTask(id) {
-  await request(API_URL + id + "/", "Could not delete task", { method: "DELETE" });
+  const response = await fetch(API_URL + id + "/", {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not delete task");
+  }
 }
