@@ -8,53 +8,39 @@ export default function App() {
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState("");
 
-  async function loadTasks() {
+  async function reportErrors(action) {
     try {
-      const tasksFromServer = await getTasks();
-      setTasks(tasksFromServer);
+      await action();
     } catch (err) {
       setError(err.message);
     }
   }
 
   useEffect(() => {
-    loadTasks();
+    reportErrors(async () => setTasks(await getTasks()));
   }, []);
 
-  async function handleAdd(newTask) {
-    try {
+  function handleAdd(newTask) {
+    return reportErrors(async () => {
       const savedTask = await addTask(newTask);
       setTasks([savedTask, ...tasks]);
-    } catch (err) {
-      setError(err.message);
-    }
+    });
   }
 
-  async function handleToggle(task) {
-    try {
+  function handleToggle(task) {
+    return reportErrors(async () => {
       const updatedTask = await editTask(task.id, {
         is_completed: !task.is_completed,
       });
-      const newTasks = tasks.map((oldTask) => {
-        if (oldTask.id === task.id) {
-          return updatedTask;
-        }
-        return oldTask;
-      });
-      setTasks(newTasks);
-    } catch (err) {
-      setError(err.message);
-    }
+      setTasks(tasks.map((oldTask) => (oldTask.id === task.id ? updatedTask : oldTask)));
+    });
   }
 
-  async function handleDelete(id) {
-    try {
+  function handleDelete(id) {
+    return reportErrors(async () => {
       await removeTask(id);
-      const newTasks = tasks.filter((task) => task.id !== id);
-      setTasks(newTasks);
-    } catch (err) {
-      setError(err.message);
-    }
+      setTasks(tasks.filter((task) => task.id !== id));
+    });
   }
 
   const doneTasks = tasks.filter((task) => task.is_completed);

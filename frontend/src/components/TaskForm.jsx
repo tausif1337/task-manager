@@ -11,11 +11,7 @@ export default function TaskForm({ onAdd }) {
       return;
     }
 
-    onAdd({
-      title: title,
-      description: description,
-      is_completed: false,
-    });
+    onAdd({ title, description, is_completed: false });
 
     setTitle("");
     setDescription("");
