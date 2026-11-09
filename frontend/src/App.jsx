@@ -1,63 +1,65 @@
 import { useEffect, useState } from "react";
 
-import TaskForm from "./components/TaskForm.jsx";
-import TaskList from "./components/TaskList.jsx";
 import { addTask, editTask, getTasks, removeTask } from "./api.js";
 
 export default function App() {
+  // State is data React remembers. When it changes, React redraws the page.
   const [tasks, setTasks] = useState([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [error, setError] = useState("");
+
+  // Get all the tasks from the backend and show them on the page.
+  async function loadTasks() {
+    try {
+      const loadedTasks = await getTasks();
+      setTasks(loadedTasks);
+      setError(""); // Everything worked, so remove any old error message.
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
   // Load the tasks once, when the page first opens.
   useEffect(() => {
-    async function loadTasks() {
-      try {
-        const loadedTasks = await getTasks();
-        setTasks(loadedTasks);
-      } catch (err) {
-        setError(err.message);
-      }
-    }
-
     loadTasks();
   }, []);
 
-  // Save a new task and put it at the top of the list.
-  async function handleAdd(newTask) {
+  // Runs when the "Add Task" button is clicked.
+  async function handleAdd(event) {
+    // Stop the browser from reloading the page.
+    event.preventDefault();
+
+    // Don't add a task with an empty title.
+    if (title.trim() === "") {
+      return;
+    }
+
     try {
-      const savedTask = await addTask(newTask);
-      setTasks([savedTask, ...tasks]);
+      await addTask({ title, description });
+      setTitle("");
+      setDescription("");
+      await loadTasks();
     } catch (err) {
       setError(err.message);
     }
   }
 
-  // Switch a task between done and not done.
+  // Runs when a "Done" or "Undo" button is clicked.
   async function handleToggle(task) {
     try {
-      const updatedTask = await editTask(task.id, {
-        is_completed: !task.is_completed,
-      });
-
-      const newTasks = tasks.map((oldTask) => {
-        if (oldTask.id === task.id) {
-          return updatedTask;
-        }
-        return oldTask;
-      });
-      setTasks(newTasks);
+      await editTask(task.id, { is_completed: !task.is_completed });
+      await loadTasks();
     } catch (err) {
       setError(err.message);
     }
   }
 
-  // Delete a task and take it off the list.
+  // Runs when a "Delete" button is clicked.
   async function handleDelete(id) {
     try {
       await removeTask(id);
-
-      const remainingTasks = tasks.filter((task) => task.id !== id);
-      setTasks(remainingTasks);
+      await loadTasks();
     } catch (err) {
       setError(err.message);
     }
@@ -65,6 +67,7 @@ export default function App() {
 
   const doneTasks = tasks.filter((task) => task.is_completed);
 
+  // Everything below is what you see on the page.
   return (
     <main className="min-h-screen bg-slate-50 p-6">
       <div className="mx-auto grid max-w-2xl gap-5">
@@ -75,13 +78,80 @@ export default function App() {
           </p>
         </div>
 
-        <TaskForm onAdd={handleAdd} />
+        {/* value shows the state. onChange saves each key you type into the state. */}
+        <form onSubmit={handleAdd} className="grid gap-3 rounded bg-white p-4 shadow">
+          <input
+            className="w-full rounded border border-slate-300 p-2"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Task title"
+          />
 
+          <textarea
+            className="w-full rounded border border-slate-300 p-2"
+            rows="2"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="Description (optional)"
+          />
+
+          <button className="rounded bg-teal-700 p-2 font-semibold text-white">
+            Add Task
+          </button>
+        </form>
+
+        {/* A && B means: only show B when A is true. */}
         {error && (
           <p className="rounded bg-rose-100 p-3 text-sm text-rose-700">{error}</p>
         )}
 
-        <TaskList tasks={tasks} onToggle={handleToggle} onDelete={handleDelete} />
+        {tasks.length === 0 && (
+          <p className="rounded bg-white p-6 text-center text-slate-500">
+            No tasks yet.
+          </p>
+        )}
+
+        {/* map makes one <li> for each task. */}
+        <ul className="grid gap-3">
+          {tasks.map((task) => {
+            // A finished task gets a line through its title and an "Undo" button.
+            let titleStyle = "font-semibold";
+            let buttonText = "Done";
+
+            if (task.is_completed) {
+              titleStyle = "font-semibold line-through";
+              buttonText = "Undo";
+            }
+
+            return (
+              <li
+                key={task.id}
+                className="flex items-start justify-between gap-3 rounded bg-white p-4 shadow"
+              >
+                <div>
+                  <h2 className={titleStyle}>{task.title}</h2>
+                  <p className="text-sm text-slate-600">{task.description}</p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleToggle(task)}
+                    className="rounded border px-3 py-1"
+                  >
+                    {buttonText}
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(task.id)}
+                    className="rounded border px-3 py-1 text-rose-600"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </main>
   );
