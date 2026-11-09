@@ -8,39 +8,59 @@ export default function App() {
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState("");
 
-  async function reportErrors(action) {
+  // Load the tasks once, when the page first opens.
+  useEffect(() => {
+    async function loadTasks() {
+      try {
+        const loadedTasks = await getTasks();
+        setTasks(loadedTasks);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+
+    loadTasks();
+  }, []);
+
+  // Save a new task and put it at the top of the list.
+  async function handleAdd(newTask) {
     try {
-      await action();
+      const savedTask = await addTask(newTask);
+      setTasks([savedTask, ...tasks]);
     } catch (err) {
       setError(err.message);
     }
   }
 
-  useEffect(() => {
-    reportErrors(async () => setTasks(await getTasks()));
-  }, []);
-
-  function handleAdd(newTask) {
-    return reportErrors(async () => {
-      const savedTask = await addTask(newTask);
-      setTasks([savedTask, ...tasks]);
-    });
-  }
-
-  function handleToggle(task) {
-    return reportErrors(async () => {
+  // Switch a task between done and not done.
+  async function handleToggle(task) {
+    try {
       const updatedTask = await editTask(task.id, {
         is_completed: !task.is_completed,
       });
-      setTasks(tasks.map((oldTask) => (oldTask.id === task.id ? updatedTask : oldTask)));
-    });
+
+      const newTasks = tasks.map((oldTask) => {
+        if (oldTask.id === task.id) {
+          return updatedTask;
+        }
+        return oldTask;
+      });
+      setTasks(newTasks);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
-  function handleDelete(id) {
-    return reportErrors(async () => {
+  // Delete a task and take it off the list.
+  async function handleDelete(id) {
+    try {
       await removeTask(id);
-      setTasks(tasks.filter((task) => task.id !== id));
-    });
+
+      const remainingTasks = tasks.filter((task) => task.id !== id);
+      setTasks(remainingTasks);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   const doneTasks = tasks.filter((task) => task.is_completed);
@@ -57,9 +77,9 @@ export default function App() {
 
         <TaskForm onAdd={handleAdd} />
 
-        {error ? (
+        {error && (
           <p className="rounded bg-rose-100 p-3 text-sm text-rose-700">{error}</p>
-        ) : null}
+        )}
 
         <TaskList tasks={tasks} onToggle={handleToggle} onDelete={handleDelete} />
       </div>

@@ -5,12 +5,15 @@ export default function TaskForm({ onAdd }) {
   const [description, setDescription] = useState("");
 
   function handleSubmit(event) {
+    // Stop the browser from reloading the page.
     event.preventDefault();
 
+    // Don't add a task with an empty title.
     if (title.trim() === "") {
       return;
     }
 
+    // Send the new task to App, then empty the form.
     onAdd({ title, description, is_completed: false });
 
     setTitle("");
